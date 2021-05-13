@@ -2,7 +2,7 @@ module UnpackUInt12s
 
     using SIMD
     using ..UInt24s
-    import ..UInt12Arrays: UInt12Array
+    import ..UInt12ArraysBase: UInt12Array
 
     include( joinpath("unpack", "unpack_simd_256.jl") )
     include( joinpath("unpack", "unpack_simd_512.jl") )
