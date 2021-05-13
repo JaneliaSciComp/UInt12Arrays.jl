@@ -22,4 +22,11 @@ it may be advantageous to keep the 12-bit integers packed into a dense array.
 
 1. Provide a `UInt12Array` that allows for indexing of arrays of packed `UInt12`s.
 2. Allow access of 12-bit integers as type `UInt16` (default element type of `UInt12Array`)
-3. Provides a prototype `UInt12` type
+3. Provides a prototype `UInt12` type that boxes a `UInt16` and implement 12-bit arithmetic
+4. Provides lookup table (LUT) and single instruction multiple data (SIMD) methods for unpacking 12-bit data
+
+## Why is the default element type a `UInt16` rather than `UInt12`?
+
+As mentioned in the background, there is better hardware and compiler support
+for `UInt16`. Additionally the supporting code for `UInt12` is under
+development with the main implementation being a boxed `UInt16`.
