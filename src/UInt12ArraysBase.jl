@@ -12,7 +12,7 @@ T - Element type of the UInt12Array. Typically this might be either UInt12 or UI
 B - Base type for the UIn12Array's internal vector storage
 N - Number of dimensions of the array
 """
-struct UInt12Array{T, B <: AbstractVector, N} <: AbstractUInt12Array{T,N}
+mutable struct UInt12Array{T, B <: AbstractVector, N} <: AbstractUInt12Array{T,N}
     data::B
     size::NTuple{N,Int}
 end
@@ -68,8 +68,12 @@ UInt12Array(data::B) where B <: AbstractVector = UInt12Vector(data)
     The single parameter constructor allows for specification of an element type. For example
     you may want the element type to actually be a UInt12 rather than the default UInt16.
 """
-UInt12Vector{T}(data::B) where {T,B} =
-    UInt12Vector{T,B}(data, size(data) .÷ 3 .* 2)
+UInt12Vector{T}(data::B) where {T,B <: AbstractVector} =
+    UInt12Vector{T}( reinterpret(UInt8, data) )
+UInt12Vector{T}(data::B) where {T,B <: AbstractVector{UInt8}} =
+    UInt12Vector{T,B}(data, size(data) .*2 .÷ 3)
+UInt12Vector{T}(data::B) where {T,B <: AbstractArray{UInt8}} =
+    UInt12Vector{T,B}(data, size(data) .*2 .÷ 3)
 UInt12Vector{T}(data::B, length::Int) where {T,B} =
     UInt12Vector{T,B}(data, (length,))
 UInt12Matrix{T}(data::B, row::Int, col::Int) where {T,B} =
@@ -114,6 +118,7 @@ Base.IndexStyle(::Type{<: UInt12Array}) = IndexLinear()
 
 # Methods for B <: AbstractVector{UInt8}, this assumes a straightforward, dense packing
 function Base.getindex(A::UInt12Array{T,<: AbstractVector{UInt8},N}, i::Int) where {T,N}
+    @boundscheck checkbounds(A, i)
     first_byte_index = ( (i - 1) ÷ 2 ) *3 + 1
     ord = mod1(i,2)
     if ord == 1
@@ -121,9 +126,10 @@ function Base.getindex(A::UInt12Array{T,<: AbstractVector{UInt8},N}, i::Int) whe
     else
         out = (A.data[ first_byte_index + 1 ] & 0xf0) >> 4 | ( UInt16(A.data[ first_byte_index + 2]) << 4 )
     end
-    T( out )
+    convert(T, out)
 end
 function Base.setindex!(A::UInt12Array{T,<: AbstractVector{UInt8},N}, v, i::Int) where {T,N}
+    @boundscheck checkbounds(A, i)
     first_byte_index = ( (i - 1) ÷ 2 ) * 3 + 1
     ord = mod1(i,2)
     p = A.data[ first_byte_index + 1 ]
@@ -134,6 +140,10 @@ function Base.setindex!(A::UInt12Array{T,<: AbstractVector{UInt8},N}, v, i::Int)
         A.data[ first_byte_index + 1] = ( ( 0x0f & v) << 4 ) | (p & 0x00f)
         A.data[ first_byte_index + 2] = ( 0xff0 & v ) >> 4
     end
+end
+function Base.resize!(A::UInt12Array{T,B,N}, nl::Integer) where {T,B <: AbstractVector{UInt8},N}
+    resize!(A.data, ceil(Int, nl*3/2) )
+    A.size = (nl,)
 end
 
 end # module UInt12ArraysBase
