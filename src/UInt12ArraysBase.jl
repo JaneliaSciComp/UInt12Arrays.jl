@@ -3,14 +3,22 @@ module UInt12ArraysBase
 export UInt12Array, UInt12Vector, UInt12Matrix
 
 import ..UInt12Arrays: default_eltype
+import ..UInt12s: UInt12
+import ..UInt24s: UInt24
 
 abstract type AbstractUInt12Array{T, N} <: AbstractArray{T,N} end
 
 """
-UInt12Array has the following parameters:
-T - Element type of the UInt12Array. Typically this might be either UInt12 or UInt16
-B - Base type for the UIn12Array's internal vector storage
-N - Number of dimensions of the array
+    UInt12Array{T, B, N}(data::B [, size::NTuple{N,Int} ])
+    UInt12Array{T, B, N}(undef    , size::NTuple{N,Int}  )
+
+UInt12Array represents an array of densely packed 12-bit integers.
+
+UInt12AArray has the following parameters:
+`T` - Element type of the UInt12Array. Typically this might be either UInt12 or
+    UInt16. Default is UInt12Arrays.default_eltype.
+`B` - Base type for the UIn12Array's internal vector storage.
+`N` - Number of dimensions of the array.
 """
 mutable struct UInt12Array{T, B <: AbstractVector, N} <: AbstractUInt12Array{T,N}
     data::B
@@ -21,6 +29,11 @@ const UInt12Vector{T,B} = UInt12Array{T, B, 1}
 const UInt12Matrix{T,B} = UInt12Array{T, B, 2}
 
 # Constructors
+
+# Copy constructor, still a view on the underlying data
+UInt12Array(A::UInt12Array{T, B, N}) where {T,B,N} =
+    UInt12Array{T, B, N}(A.data, A.size)
+
 
 """
     UInt12Vector(data::Vector{UInt8})
@@ -81,7 +94,6 @@ UInt12Matrix{T}(data::B, row::Int, col::Int) where {T,B} =
 UInt12Array{T}(data::B, row::Int, col::Int, depth::Int) where {T,B} =
     UInt12Array{T,B,3}(data, (row, col, depth))
 
-
 # Undefined initialization
 
 ## Element type not defined, default to UInt16
@@ -110,7 +122,11 @@ UInt12Array{T}(::UndefInitializer, rows::Int, cols::Int, depth::Int) where T =
 UInt12Array{T}(::UndefInitializer, d::Vararg{Int, N}) where {T,N} =
     UInt12Array{T,Vector{UInt8},N}( Vector{UInt8}(undef, ceil(Int, prod(d)*3/2) ), d)
 
-
+function UInt12Array{T, B, N}(::UndefInitializer, size::NTuple{N,Int}) where {T,B <: AbstractVector,N}
+    E = eltype(B)
+    szE = sizeof(E)
+    UInt12Array{T, B, N}(B(undef, div.( size .* 3 .÷ szE, 2, RoundUp) ), size)
+end
 
 # Generic methods for all parameters
 Base.size(data::UInt12Array) = data.size
@@ -130,6 +146,9 @@ function Base.getindex(A::UInt12Array{T,<: AbstractVector{UInt8},N}, i::Int) whe
 end
 function Base.setindex!(A::UInt12Array{T,<: AbstractVector{UInt8},N}, v, i::Int) where {T,N}
     @boundscheck checkbounds(A, i)
+    if v > 0xfff
+        throw( InexactError(:UInt12, UInt12, v))
+    end
     first_byte_index = ( (i - 1) ÷ 2 ) * 3 + 1
     ord = mod1(i,2)
     p = A.data[ first_byte_index + 1 ]
@@ -143,6 +162,36 @@ function Base.setindex!(A::UInt12Array{T,<: AbstractVector{UInt8},N}, v, i::Int)
 end
 function Base.resize!(A::UInt12Array{T,B,N}, nl::Integer) where {T,B <: AbstractVector{UInt8},N}
     resize!(A.data, ceil(Int, nl*3/2) )
+    A.size = (nl,)
+end
+
+# Methods for B <: AbstractVector{UInt24}
+function Base.getindex(A::UInt12Array{T,<: AbstractVector{UInt24},N}, i::Int) where {T,N}
+    #@boundscheck checkbounds(A, i)
+    uint24_index = ( (i - 1) ÷ 2 + 1)
+    ord = mod1(i,2)
+    if ord == 1
+        out = A.data[ uint24_index ] & 0xfff
+    else
+        out = A.data[ uint24_index ] >>> 12
+    end
+    convert(T, out)
+end
+function Base.setindex!(A::UInt12Array{T,<: AbstractVector{UInt24},N}, v, i::Int) where {T,N}
+    @boundscheck checkbounds(A, i)
+    if v > 0xfff
+        throw( InexactError(:UInt12, UInt12, v))
+    end
+    uint24_index = ( (i - 1) ÷ 2 + 1)
+    ord = mod1(i,2)
+    if ord == 1
+        A.data[ uint24_index ] = (0xfff & v) | (0xfff000 & A.data[ uint24_index ])
+    else
+        A.data[ uint24_index ] = (0x000fff & v) << 12 | (0x000fff & A.data[ uint24_index ])
+    end
+end
+function Base.resize!(A::UInt12Array{T,B,N}, nl::Integer) where {T,B <: AbstractVector{UInt24},N}
+    resize!(A.data, div(nl, 2, RoundUp) )
     A.size = (nl,)
 end
 
