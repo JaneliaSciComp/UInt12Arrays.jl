@@ -60,8 +60,19 @@ module UnpackUInt12s
 
     function Base.convert(::Type{Array{UInt16,1}}, S::SubArray{UInt16, 1, UInt12Array{UInt16, B, 1}, <: Tuple{UnitRange}}) where {B <: SIMD.FastContiguousArray{UInt8,1}}
         try
-            convert(Vector{UInt16}, convert(UInt12Array{UInt16}, S))
-            # TODO: Increment first index of subarray by one, convert that. Do elementwise conversion of the first element.
+            if S |> parentindices |> first |> first |> isodd
+                convert(Vector{UInt16}, convert(UInt12Array{UInt16}, S))
+            elseif length(S) < 16
+                Array{UInt16,1}(S)
+            else
+                out = Array{UInt16,1}(undef, length(S))
+                # Copy first element
+                out[1] = S[1]
+                # Convert the rest using SIMD
+                Arest = convert(UInt12Array{UInt16}, @view S[2:end])
+                unpack_uint12_to_uint16(Arest.data, @view out[2:end])
+                out
+            end
         catch err
             @warn "Unable to convert using SIMD. Defaulting to slower element-wise conversion." err
             Array{UInt16,1}(S)
