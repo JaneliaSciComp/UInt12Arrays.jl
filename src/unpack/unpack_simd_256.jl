@@ -53,7 +53,14 @@ function unpack_uint12_to_uint16(A::SIMD.FastContiguousArray{UInt8,1}, out::SIMD
     @inbounds for i = idx[1:end-1]
         unpack_uint12_to_uint16_offset_m4(A, out, i)
     end
-    unpack_uint12_to_uint16_offset_m8(A, out, length(A) - 23)
+    extra_bytes = rem(length(A), 3)
+    unpack_uint12_to_uint16_offset_m8(A, out, length(A) - 23 - extra_bytes)
+    if extra_bytes == 1
+        out[length(A) * 2 ÷ 3] = A[end]
+    else
+        # extra_bytes == 2
+        out[length(A) * 2 ÷ 3] = reinterpret(UInt16, A[end-1:end])[1] & 0xfff
+    end
     out
 end
 
@@ -63,7 +70,7 @@ end
     Unpack entire array, allocates and returns output buffer
 """
 function unpack_uint12_to_uint16(A::SIMD.FastContiguousArray{UInt8,1})
-    out = Vector{UInt16}(undef, length(A) ÷ 3 * 2)
+    out = Vector{UInt16}(undef, length(A) * 2 ÷ 3)
     unpack_uint12_to_uint16(A, out)
 end
 
@@ -77,6 +84,19 @@ function unpack_uint12_to_uint16(filepath::AbstractString)
     A = Mmap.mmap(ios)
     unpack_uint12_to_uint16(A);
     close(ios)
+end
+
+function unpack_uint12_to_uint16_partitioned(inn, out = Array{UInt16,1}(undef, div(length(inn), 3, RoundUp)*2))
+    partition_length = div( length(inn), Threads.nthreads(), RoundUp)
+    # Ensure that partition length is a multiple of three
+    partition_length += 3 - mod1(partition_length, 3)
+    @debug "Partition Length: " partition_length partition_length ÷ 3 * 2
+    inp = collect(Iterators.partition(inn, partition_length))
+    outp = collect(Iterators.partition(out, partition_length ÷ 3 * 2))
+    @inbounds Threads.@threads for i in eachindex(inp)
+        unpack_uint12_to_uint16(inp[i], outp[i])
+    end
+    out
 end
 
 #=

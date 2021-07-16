@@ -31,4 +31,23 @@ using Test
     C = UInt12Vector(undef, 6)
     @test size(C) == (6,)
     @test size(C.data) == (9,)
+    @test convert(Array{UInt16}, A) == A
+    @test convert(UInt12Array, @view(A[1:end])) == A
+    @test convert(UInt12Array, @view(A[1:3])) == A[1:3]
+    @test convert(UInt12Array, @view(A[1:2])) == A[1:2]
+    @test convert(UInt12Array, @view(A[1:1])) == A[1:1]
+    @test_broken convert(UInt12Array, @view(A[2:end])) == A[2:end]
+    @test convert(UInt12Array, @view(A[3:end])) == A[3:end]
+    @test_broken convert(UInt12Array, @view(A[4:end])) == A[4:end]
+    @test convert(Array{UInt16}, @view(A[1:end])) == A
+    @test convert(Array{UInt16}, @view(A[1:3])) == A[1:3]
+    @test convert(Array{UInt16}, @view(A[1:2])) == A[1:2]
+    @test convert(Array{UInt16}, @view(A[1:1])) == A[1:1]
+    @test convert(Array{UInt16}, @view(A[2:end])) == A[2:end]
+    @test convert(Array{UInt16}, @view(A[3:end])) == A[3:end]
+    @test convert(Array{UInt16}, @view(A[4:end])) == A[4:end]
+    @test convert(Array, @view(A[1:1])) == A[1:1]
+    @test convert(Array, @view(A[2:end])) == A[2:end]
+    @test convert(Array, @view(A[3:end])) == A[3:end]
+    @test convert(Array, @view(A[4:end])) == A[4:end]
 end

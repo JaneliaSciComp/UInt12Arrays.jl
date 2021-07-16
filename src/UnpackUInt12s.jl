@@ -2,7 +2,7 @@ module UnpackUInt12s
 
     using SIMD
     using ..UInt24s
-    import ..UInt12ArraysBase: UInt12Array
+    import ..UInt12ArraysBase: UInt12Array, map_idx_to_byte
 
     include( joinpath("unpack", "unpack_simd_256.jl") )
     include( joinpath("unpack", "unpack_simd_512.jl") )
@@ -57,4 +57,18 @@ module UnpackUInt12s
  
     Base.convert(::Type{Array{UInt16}}, A::UInt12Array{UInt16,B,N}) where {B <: SIMD.FastContiguousArray{UInt8,1}, N} =
         Base.convert(Array{UInt16,N}, A)
+
+    function Base.convert(::Type{Array{UInt16,1}}, S::SubArray{UInt16, 1, UInt12Array{UInt16, B, 1}, <: Tuple{UnitRange}}) where {B <: SIMD.FastContiguousArray{UInt8,1}}
+        try
+            convert(Vector{UInt16}, convert(UInt12Array{UInt16}, S))
+            # TODO: Increment first index of subarray by one, convert that. Do elementwise conversion of the first element.
+        catch err
+            @warn "Unable to convert using SIMD. Defaulting to slower element-wise conversion." err
+            Array{UInt16,1}(S)
+        end
+    end
+    Base.convert(::Type{Vector}, S::SubArray{UInt16, 1, UInt12Array{UInt16, B, 1}, <: Tuple{UnitRange}}) where {B <: SIMD.FastContiguousArray{UInt8,1}} =
+        Base.convert(Vector{UInt16}, S)
+    Base.convert(::Type{Array}, S::SubArray{UInt16, 1, UInt12Array{UInt16, B, 1}, <: Tuple{UnitRange}}) where {B <: SIMD.FastContiguousArray{UInt8,1}} =
+        Base.convert(Vector{UInt16}, S)
 end

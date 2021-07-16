@@ -194,5 +194,36 @@ function Base.resize!(A::UInt12Array{T,B,N}, nl::Integer) where {T,B <: Abstract
     resize!(A.data, div(nl, 2, RoundUp) )
     A.size = (nl,)
 end
+function Base.parent(A::UInt12Array{T,B,N}) where {T,B,N}
+    A.data
+end
+"""
+    map_idex_to_byte(idx, byte_idx = 1)
+
+    Map array index to an underlying byte. byte_idx ∈ 1:3
+"""
+map_idx_to_byte(idx, byte_idx = 1) = (idx - 1) ÷ 2 * 3 + byte_idx
+
+function Base.parentindices(A::UInt12Array{T,B,N}, indices::Base.OneTo = (eachindex(A),)) where {T, B <: AbstractVector{UInt8}, N}
+    # Only calculate the last index since we know the first index must be `1`
+    last_indices = last.(indices)
+    # If odd, map the 2nd byte. If even, map to the 3rd byte.
+    last_byte_idx = map_idx_to_byte.(last_indices, iseven.(last_indices) .+ 2)
+    Base.OneTo.(last_byte_idx)
+end
+function Base.parentindices(A::UInt12Array{T,B,N}, indices) where {T, B <: AbstractVector{UInt8}, N}
+    first_byte_idx = map_idx_to_byte.(first.(indices))
+    last_indices = last.(indices)
+    # If odd, map the 2nd byte. If even, map to the 3rd byte.
+    last_byte_idx = map_idx_to_byte.(last_indices, iseven.(last_indices) .+ 2)
+    ntuple(i->first_byte_idx[i]:last_byte_idx[i], length(indices))
+end
+function Base.convert(::Type{UInt12Array{T}}, S::SubArray{T,N,UInt12Array{T,B,N},I,L}) where {T,B,N,I,L}
+    p_idx = parentindices(S)
+    @assert all(isodd.(first.(p_idx))) "The initial parent indices of each dimension must be odd."
+    idx = parentindices(parent(S), p_idx)
+    UInt12Vector{T}(view(parent(parent(S)), idx...))
+end
+Base.convert(::Type{UInt12Array}, S::SubArray{T,N,UInt12Array{T,B,N},I,L}) where {T,B,N,I,L} = convert(UInt12Array{T}, S)
 
 end # module UInt12ArraysBase
