@@ -57,8 +57,7 @@ function unpack_uint12_to_uint16(A::SIMD.FastContiguousArray{UInt8,1}, out::SIMD
     unpack_uint12_to_uint16_offset_m8(A, out, length(A) - 23 - extra_bytes)
     if extra_bytes == 1
         out[length(A) * 2 ÷ 3] = A[end]
-    else
-        # extra_bytes == 2
+    elseif extra_bytes == 2
         out[length(A) * 2 ÷ 3] = reinterpret(UInt16, A[end-1:end])[1] & 0xfff
     end
     out
