@@ -37,11 +37,11 @@ module UnpackUInt12s
                 return copy(A)
             else
                 @debug "Using LUT" len
-                return lutConvertToUInt16(A.data)
+                return reshape(lutConvertToUInt16(A.data), size(A))
             end
         else
             @debug "Using SIMD" len
-            return unpack_uint12_to_uint16(A.data)
+            return reshape(unpack_uint12_to_uint16(A.data), size(A))
         end
     end
     function Base.convert(::Type{Array{UInt16,N}}, A::UInt12Array{UInt16,B,N}) where {B, N}

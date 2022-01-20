@@ -50,4 +50,27 @@ using Test
     @test convert(Array, @view(A[2:end])) == A[2:end]
     @test convert(Array, @view(A[3:end])) == A[3:end]
     @test convert(Array, @view(A[4:end])) == A[4:end]
+    extended_data = [data; data[1:3]]
+    A3 = UInt12Array(extended_data, 1, 2, 3)
+    @test convert(Array{UInt16}, A3) == A3
+    @test size(convert(Array{UInt16}, A3)) == (1,2,3)
+    @test convert(Array{UInt16,3}, A3) == A3
+    @test size(convert(Array{UInt16,3}, A3)) == (1,2,3)
+    A3 = UInt12Array(extended_data, 3, 2, 1)
+    @test convert(Array{UInt16}, A3) == A3
+    @test size(convert(Array{UInt16}, A3)) == (3,2,1)
+    @test convert(Array{UInt16,3}, A3) == A3
+    @test size(convert(Array{UInt16,3}, A3)) == (3,2,1)
+    data36 = rand(UInt8, 36)
+    A36 = UInt12Array(data36, 2, 3, 4)
+    @test convert(Array{UInt16}, A36) == A36
+    @test size(convert(Array{UInt16}, A36)) == size(A36)
+    @test convert(Array{UInt16, 3}, A36) == A36
+    @test size(convert(Array{UInt16, 3}, A36)) == size(A36)
+    data180 = rand(UInt8, 180)
+    A180 = UInt12Array(data180, 4, 5, 6)
+    @test convert(Array{UInt16}, A180) == A180
+    @test size(convert(Array{UInt16}, A180)) == size(A180)
+    @test convert(Array{UInt16, 3}, A180) == A180
+    @test size(convert(Array{UInt16, 3}, A180)) == size(A180)
 end
