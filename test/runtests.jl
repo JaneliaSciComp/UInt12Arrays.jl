@@ -67,8 +67,20 @@ using Test
     @test size(convert(Array{UInt16}, A36)) == size(A36)
     @test convert(Array{UInt16, 3}, A36) == A36
     @test size(convert(Array{UInt16, 3}, A36)) == size(A36)
+    reshaped36 = reshape(data36, 3, 3, 4)
+    A36 = UInt12Array(reshaped36)
+    @test convert(Array{UInt16}, A36) == A36
+    @test size(convert(Array{UInt16}, A36)) == size(A36)
+    @test convert(Array{UInt16, 3}, A36) == A36
+    @test size(convert(Array{UInt16, 3}, A36)) == size(A36)
     data180 = rand(UInt8, 180)
     A180 = UInt12Array(data180, 4, 5, 6)
+    @test convert(Array{UInt16}, A180) == A180
+    @test size(convert(Array{UInt16}, A180)) == size(A180)
+    @test convert(Array{UInt16, 3}, A180) == A180
+    @test size(convert(Array{UInt16, 3}, A180)) == size(A180)
+    reshaped180 = reshape(data180, 6, 5, 6)
+    A180 = UInt12Array(reshaped180)
     @test convert(Array{UInt16}, A180) == A180
     @test size(convert(Array{UInt16}, A180)) == size(A180)
     @test convert(Array{UInt16, 3}, A180) == A180

@@ -17,7 +17,7 @@ UInt12Array represents an array of densely packed 12-bit integers.
 UInt12AArray has the following parameters:
 `T` - Element type of the UInt12Array. Typically this might be either UInt12 or
     UInt16. Default is UInt12Arrays.default_eltype.
-`B` - Base type for the UIn12Array's internal vector storage.
+`B` - Base type for the UInt12Array's internal vector storage.
 `N` - Number of dimensions of the array.
 """
 mutable struct UInt12Array{T, B <: AbstractVector, N} <: AbstractUInt12Array{T,N}
@@ -74,6 +74,18 @@ UInt12Array(data::B, row::Int, col::Int, depth::Int) where B =
     UInt12Array{default_eltype}(data, row, col, depth)
 
 UInt12Array(data::B) where B <: AbstractVector = UInt12Vector(data)
+
+function UInt12Array{T}(data::AbstractArray{UInt8,N}) where {T,N}
+    sz = size(data)
+    sz1 = first(sz)
+    @assert mod(sz1, 3) == 0 "First dimension of the data must be a multiple of three"
+    uint12_sz = (sz1÷3*2, sz[2:end]...)
+    v = vec(data)
+    return UInt12Array{T, typeof(v), N}(v, uint12_sz)
+end
+
+UInt12Array(data::AbstractArray{UInt8,N}) where {T,N} = UInt12Array{default_eltype}(data)
+UInt12Array(data::AbstractArray) = UInt12Array{default_eltype}(reinterpret(UInt8, data))
 
 """
     UInt12Vector{T}(data::Vector{UInt8})
