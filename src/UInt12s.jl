@@ -68,7 +68,9 @@ Core.UInt64(x::UInt12) = UInt64(x.data)
 
 Base.show(io::IO, n::UInt12) = print(io, "0x", string(n, pad = 3, base = 16))
 Base.hex(x::UInt12, pad::Integer, neg::Bool) = Base.hex(x.data, pad, neg)
+Base.hex(x::UInt12, pad::Int, neg::Bool) = Base.hex(x.data, pad, neg)
 Base.bin(x::UInt12, pad::Integer, neg::Bool) = Base.bin(x.data, pad, neg)
+Base.bin(x::UInt12, pad::Int, neg::Bool) = Base.bin(x.data, pad, neg)
 Base.promote_rule(::Type{UInt12{T}}, o::Type{S}) where {T,S} = promote_type(T, o)
 Base.:+(x::UInt12{T}, y::Union{Bool, UBU}) where T = UInt12{T}( (x.data + y) % 0x1000 )
 
