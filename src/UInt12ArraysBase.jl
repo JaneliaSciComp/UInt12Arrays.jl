@@ -84,7 +84,7 @@ function UInt12Array{T}(data::AbstractArray{UInt8,N}) where {T,N}
     return UInt12Array{T, typeof(v), N}(v, uint12_sz)
 end
 
-UInt12Array(data::AbstractArray{UInt8,N}) where {T,N} = UInt12Array{default_eltype}(data)
+UInt12Array(data::AbstractArray{UInt8,N}) where {N} = UInt12Array{default_eltype}(data)
 UInt12Array(data::AbstractArray) = UInt12Array{default_eltype}(reinterpret(UInt8, data))
 
 """

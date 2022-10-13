@@ -1,7 +1,7 @@
 name = "UInt12Arrays"
 uuid = "c28d94ed-d5b6-4a5f-906b-ac5b0f674341"
 authors = ["Mark Kittisopikul <kittisopikulm@janelia.hhmi.org> and contributors"]
-version = "0.3.0"
+version = "0.3.1"
 
 [deps]
 BitIntegers = "c3b6d118-76ef-56ca-8cc7-ebb389d030a1"
