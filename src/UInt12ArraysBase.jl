@@ -51,7 +51,7 @@ UInt12Array(A::UInt12Array{T, B, N}) where {T,B,N} =
 # Example
 ```jldoctest
 julia> A = UInt12Array(UInt8[0xba, 0xdc, 0xfe])
-2-element UInt12Array{UInt16,Array{UInt8,1},1}:
+2-element UInt12Vector{UInt16, Vector{UInt8}}:
  0x0cba
  0x0fed
 
@@ -59,7 +59,7 @@ julia> A[1]
 0x0cba
 
 julia> copy(A)
-2-element Array{UInt16,1}:
+2-element Vector{UInt16}:
  0x0cba
  0x0fed
 

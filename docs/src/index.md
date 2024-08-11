@@ -10,5 +10,5 @@ Documentation for [UInt12Arrays](https://github.com/mkitti/UInt12Arrays.jl).
 ```
 
 ```@autodocs
-Modules = [UInt12Arrays]
+Modules = [UInt12Arrays, UInt12Arrays.UInt12ArraysBase, UInt12Arrays.UnpackUInt12s]
 ```
