@@ -2,7 +2,7 @@
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "621df4e3fd90ad0837172c9ca1eabf4be275f805"
+project_hash = "abd4564f6b1021c0c6538fba0d8121be54816b20"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -23,6 +23,12 @@ uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+
+[[deps.BitIntegers]]
+deps = ["Random"]
+git-tree-sha1 = "a55462dfddabc34bc97d3a7403a2ca2802179ae6"
+uuid = "c3b6d118-76ef-56ca-8cc7-ebb389d030a1"
+version = "0.3.1"
 
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
@@ -217,6 +223,12 @@ version = "0.1.0"
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 version = "0.7.0"
 
+[[deps.SIMD]]
+deps = ["PrecompileTools"]
+git-tree-sha1 = "2803cab51702db743f3fda07dd1745aadfbf43bd"
+uuid = "fdea26ae-647d-5447-a871-4b548cad5224"
+version = "3.5.0"
+
 [[deps.Serialization]]
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 
@@ -247,9 +259,10 @@ weakdeps = ["Random", "Test"]
     TestExt = ["Test", "Random"]
 
 [[deps.UInt12Arrays]]
+deps = ["BitIntegers", "Mmap", "SIMD"]
 path = ".."
-uuid = "615be080-6ab2-4643-8016-16d3ff249799"
-version = "1.0.0-DEV"
+uuid = "c28d94ed-d5b6-4a5f-906b-ac5b0f674341"
+version = "0.3.2"
 
 [[deps.UUIDs]]
 deps = ["Random", "SHA"]
