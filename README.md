@@ -1,5 +1,9 @@
 # UInt12Arrays.jl
 
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://JaneliaSciComp.github.io/UInt12Arrays.jl/stable/)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://JaneliaSciComp.github.io/UInt12Arrays.jl/dev/)
+[![Build Status](https://github.com/JaneliaSciComp/UInt12Arrays.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JaneliaSciComp/UInt12Arrays.jl/actions/workflows/CI.yml?query=branch%3Amain)
+
 ## Synposis
 
 UInt12Arrays.jl is a Julia package to support the use of arrays of 12-bit

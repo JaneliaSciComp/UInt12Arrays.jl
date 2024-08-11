@@ -1,7 +1,7 @@
 name = "UInt12Arrays"
 uuid = "c28d94ed-d5b6-4a5f-906b-ac5b0f674341"
 authors = ["Mark Kittisopikul <kittisopikulm@janelia.hhmi.org> and contributors"]
-version = "0.3.1"
+version = "0.3.2"
 
 [deps]
 BitIntegers = "c3b6d118-76ef-56ca-8cc7-ebb389d030a1"
@@ -9,7 +9,7 @@ Mmap = "a63ad114-7e13-5084-954f-fe012c677804"
 SIMD = "fdea26ae-647d-5447-a871-4b548cad5224"
 
 [compat]
-BitIntegers = "0.2"
+BitIntegers = "0.2, 0.3"
 SIMD = "3.3"
 julia = "1"
 
