@@ -123,16 +123,28 @@ UInt12Vector{T}(::UndefInitializer, length::Int) where T = UInt12Array{T}(undef,
 UInt12Matrix{T}(::UndefInitializer, row::Int, col::Int) where T = UInt12Array{T}(undef, row, col)
 
 UInt12Array{T}(::UndefInitializer, length::Int) where T =
-    UInt12Array{T,Vector{UInt8},1}( Vector{UInt8}(undef, ceil(Int, length*3/2)), (length,) )
+    UInt12Array{T,Vector{UInt8},1}(
+        Vector{UInt8}(undef, div(length*3, 2, RoundUp)),
+        (length,)
+    )
 
 UInt12Array{T}(::UndefInitializer, rows::Int, cols::Int) where T =
-    UInt12Array{T,Vector{UInt8},2}( Vector{UInt8}(undef, ceil(Int, rows*cols*3/2)), (rows, cols,) )
+    UInt12Array{T,Vector{UInt8},2}(
+        Vector{UInt8}(undef, div(rows*cols*3, 2, RoundUp)),
+        (rows, cols,)
+    )
 
 UInt12Array{T}(::UndefInitializer, rows::Int, cols::Int, depth::Int) where T =
-    UInt12Array{T,Vector{UInt8},3}( Vector{UInt8}(undef, ceil(Int, rows * cols * depth * 3/2)), (rows, cols, depth) )
+    UInt12Array{T,Vector{UInt8},3}(
+        Vector{UInt8}(undef, div(rows * cols * depth * 3, 2, RoundUp)),
+        (rows, cols, depth)
+    )
 
 UInt12Array{T}(::UndefInitializer, d::Vararg{Int, N}) where {T,N} =
-    UInt12Array{T,Vector{UInt8},N}( Vector{UInt8}(undef, ceil(Int, prod(d)*3/2) ), d)
+    UInt12Array{T,Vector{UInt8},N}(
+        Vector{UInt8}(undef, div(prod(d)*3, 2, RoundUp)),
+        d
+    )
 
 function UInt12Array{T, B, N}(::UndefInitializer, size::NTuple{N,Int}) where {T,B <: AbstractVector,N}
     E = eltype(B)
@@ -141,8 +153,22 @@ function UInt12Array{T, B, N}(::UndefInitializer, size::NTuple{N,Int}) where {T,
 end
 
 # Generic methods for all parameters
-Base.size(data::UInt12Array) = data.size
+Base.size(A::UInt12Array) = A.size
 Base.IndexStyle(::Type{<: UInt12Array}) = IndexLinear()
+function Base.parent(A::UInt12Array)
+    A.data
+end
+
+@static if VERSION ≥ v"1.11.0-dev"
+    # resize! is no longer sufficient to implement push! and append! on Julia 1.11.0-rc2
+    # See https://github.com/JuliaLang/julia/issues/55459
+    function Base.push!(A::UInt12Vector, value)
+        new_length = length(A) + 1
+        resize!(A, new_length)
+        A[new_length] = value
+        return A
+    end
+end
 
 # Methods for B <: AbstractVector{UInt8}, this assumes a straightforward, dense packing
 function Base.getindex(A::UInt12Array{T,<: AbstractVector{UInt8},N}, i::Int) where {T,N}
@@ -173,8 +199,13 @@ function Base.setindex!(A::UInt12Array{T,<: AbstractVector{UInt8},N}, v, i::Int)
     end
 end
 function Base.resize!(A::UInt12Array{T,B,N}, nl::Integer) where {T,B <: AbstractVector{UInt8},N}
-    resize!(A.data, ceil(Int, nl*3/2) )
+    resize!(A.data, div(3*nl, 2, RoundUp))
     A.size = (nl,)
+    return A
+end
+function Base.sizehint!(A::UInt12Vector{T,B}, nl::Integer) where {T, B <: AbstractVector{UInt8}}
+    sizehint!(A.data, div(3*nl, 2, RoundUp))
+    return A
 end
 
 # Methods for B <: AbstractVector{UInt24}
@@ -205,10 +236,13 @@ end
 function Base.resize!(A::UInt12Array{T,B,N}, nl::Integer) where {T,B <: AbstractVector{UInt24},N}
     resize!(A.data, div(nl, 2, RoundUp) )
     A.size = (nl,)
+    return A
 end
-function Base.parent(A::UInt12Array{T,B,N}) where {T,B,N}
-    A.data
+function Base.sizehint!(A::UInt12Vector{T,B}, nl::Integer) where {T, B <: AbstractVector{UInt24}}
+    sizehint!(A.data, div(nl, 2, RoundUp))
+    return A
 end
+
 """
     map_idex_to_byte(idx, byte_idx = 1)
 
