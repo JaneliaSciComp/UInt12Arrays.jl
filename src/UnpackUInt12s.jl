@@ -22,10 +22,13 @@ module UnpackUInt12s
     function clear_lut()
         empty!(LUT[])
     end
+    function merge3bytes(x::NTuple{3,UInt8})
+        Int(x[1]) | Int(x[2])<<8 | Int(x[3])<<16
+    end
     function lutConvertToUInt16(A)
-        A = reinterpret(NTuple{3, UInt8}, A)
+        A = reinterpret(NTuple{3,UInt8}, A)
         init_lut()
-        result = LUT[][reinterpret.(UInt24, A) .+ 1]
+        result = LUT[][merge3bytes.(A) .+ 1]
         reinterpret(UInt16, result)
     end
 
