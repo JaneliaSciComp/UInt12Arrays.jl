@@ -23,9 +23,9 @@ module UnpackUInt12s
         empty!(LUT[])
     end
     function lutConvertToUInt16(A)
-        A = reinterpret(UInt24, A)
+        A = reinterpret(NTuple{3, UInt8}, A)
         init_lut()
-        result = LUT[][A .+ 1]
+        result = LUT[][reinterpret.(UInt24, A) .+ 1]
         reinterpret(UInt16, result)
     end
 
