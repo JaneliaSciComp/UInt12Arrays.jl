@@ -6,56 +6,40 @@ module UnpackUInt12s
 
     include( joinpath("unpack", "unpack_simd_256.jl") )
     include( joinpath("unpack", "unpack_simd_512.jl") )
-   
-    # 64 megabtyes when initialized
-    const LUT = Ref{Vector{UInt32}}()
 
-    make_lut(x) = make_lut(UInt32(x))
-    function make_lut(x::UInt32)
-        ( (x & 0xfff000) << 4) | (x & 0x000fff)
-    end
-    function init_lut()
-        if !isdefined(LUT,1) || isempty(LUT[])
-            LUT[] = make_lut.( UInt32(0):UInt32(2^24-1) )
+    function _convert_to_UInt16(data::AbstractVector{UInt8}, size)
+        bytes_required = cld((prod(size) * 3), 2)
+        bytes_available = length(data)
+        if bytes_available < bytes_required
+            throw(BoundsError(data, (firstindex(data) + bytes_required - 1,)))
         end
-    end
-    function clear_lut()
-        empty!(LUT[])
-    end
-    function merge3bytes(x::NTuple{3,UInt8})
-        Int(x[1]) | Int(x[2])<<8 | Int(x[3])<<16
-    end
-    function lutConvertToUInt16(A)
-        A = reinterpret(NTuple{3,UInt8}, A)
-        init_lut()
-        result = LUT[][merge3bytes.(A) .+ 1]
-        reinterpret(UInt16, result)
+        n, r = fldmod(bytes_required, 3)
+        out = Array{UInt16}(undef, size)
+        @inbounds for i in 0:n-1
+            a = data[begin+3*i+0]
+            b = data[begin+3*i+1]
+            c = data[begin+3*i+2]
+            merged = UInt32(a) | UInt32(b)<<8 | UInt32(c)<<16
+            out[begin+2*i+0] = merged%UInt16 & 0x0FFF
+            out[begin+2*i+1] = (merged>>12)%UInt16
+        end
+        @inbounds if r == 2
+            out[end] = (UInt16(data[begin+3*n]) | UInt16(data[begin+3*n+1])<<8) & 0x0FFF
+        end
+        out
     end
 
-    function Base.convert(::Type{Array{UInt16,N}}, A::UInt12Array{UInt16,B,N}) where {B <: SIMD.FastContiguousArray{UInt8,1}, N}
+    function Base.convert(::Type{Array{UInt16,N}}, A::UInt12Array{UInt16,B,N})::Array{UInt16,N} where {B <: SIMD.FastContiguousArray{UInt8,1}, N}
         len = length(A)
         if len < 64
-            if len < 16 || mod(len, 2) == 1
-                @debug "Using copy" len
-                return copy(A)
-            else
-                @debug "Using LUT" len
-                return reshape(lutConvertToUInt16(A.data), size(A))
-            end
+            return _convert_to_UInt16(A.data, size(A))
         else
             @debug "Using SIMD" len
             return reshape(unpack_uint12_to_uint16(A.data), size(A))
         end
     end
-    function Base.convert(::Type{Array{UInt16,N}}, A::UInt12Array{UInt16,B,N}) where {B, N}
-        len = length(A)
-        if len < 16 || mod(len, 2) == 1
-            @debug "Using copy" len
-            return copy(A)
-        else
-            @debug "Using LUT" len
-            return lutConvertToUInt16(A.data)
-        end
+    function Base.convert(::Type{Array{UInt16,N}}, A::UInt12Array{UInt16,B,N})::Array{UInt16,N} where {B, N}
+        _convert_to_UInt16(A.data, size(A))
     end
  
     Base.convert(::Type{Array{UInt16}}, A::UInt12Array{UInt16,B,N}) where {B <: SIMD.FastContiguousArray{UInt8,1}, N} =
